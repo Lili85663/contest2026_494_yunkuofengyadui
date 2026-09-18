@@ -1,0 +1,21 @@
+{
+  "format": "manual-visible-conversation-export-v1",
+  "github_login": "Lili85663",
+  "source_thread_id": "01a0ae48-4c3a-7783-a59f-250dcf8a0b03",
+  "exported_at": "2026-09-18T11:44:51.636300+00:00",
+  "messages": 212,
+  "source_snapshot_sha256": "a62b310b092466559db2eb7b2aacd02bc4c39aaf457d13ae0b755c67ae74def6",
+  "export_sha256": "c083508c8a71b95000adfdec6877ffc174d2f59096072f17f76f43f12846c039",
+  "redactions": 2,
+  "omitted": [
+    "hidden reasoning",
+    "system/developer messages",
+    "tool calls and outputs",
+    "image contents",
+    "internal compaction summaries"
+  ],
+  "official_collector_original": false,
+  "submission_status": "Manual redacted export only; official immutable log requirements need separate verification.",
+  "additional_privacy_redactions": 110,
+  "privacy_note": "Public copy additionally masks private IP addresses, remote login names, local usernames, private emails and numeric account identifiers. This is not an immutable official collector log."
+}
