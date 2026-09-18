@@ -1,0 +1,15 @@
+node_modules/
+build/
+sign/
+*.log
+build-deploy.*/
+build-contest.*/
+dist-contest/
+dist-gateway/
+build-device-smoke/
+__pycache__/
+build-native-probe/
+build-health-probe/
+.env
+.env.*
+mimo.json
