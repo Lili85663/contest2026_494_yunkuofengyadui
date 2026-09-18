@@ -1,0 +1,5 @@
+<template><div class="page"><text>固定异常回放测试 · 非真实测量</text><text>测试输入：心率 150 / 血氧 93</text><text>{{source}}</text><text>{{reply}}</text><text>{{elapsed}}</text></div></template><script>
+import provider from '../../common/ai-provider'
+import {requestHealthAdvice} from '../../common/healthAdvisor'
+export default {private:{source:'正在请求 MiMo',reply:'',elapsed:''},onInit(){const start=Date.now();this.cancel=requestHealthAdvice(provider,{heartRate:{value:150,at:start,source:'replay'},spo2:{value:93,at:start,source:'replay'}},'severe',start,r=>{this.source=r.source;this.reply=r.text;this.elapsed='耗时 '+((Date.now()-start)/1000).toFixed(1)+' 秒'})},onDestroy(){if(this.cancel)this.cancel()}}
+</script><style>.page{width:480px;height:480px;flex-direction:column;justify-content:center;background-color:#101820;padding:24px;}text{color:#ffffff;font-size:24px;margin-bottom:20px;}</style>

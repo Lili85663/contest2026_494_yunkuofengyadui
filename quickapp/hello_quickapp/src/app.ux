@@ -1,0 +1,6 @@
+<script>
+export default {
+  onCreate() { console.info('WristRhythm started: study edition 3.1.0') },
+  onDestroy() { console.info('WristRhythm stopped') }
+}
+</script>

@@ -1,0 +1,4 @@
+<template><div class="page"><text>原生 velaclaw 核验</text><text>{{result}}</text></div></template><script>
+import agent from '@system.velaclaw'
+export default {private:{result:'正在检查'},onInit(){try{if(!agent||typeof agent.ask!=='function'){this.result='功能未提供：ask 不存在';return}this.result='模块存在，正在请求';agent.ask({query:'只回复 OK',success:r=>{this.result='原生调用成功'},fail:(d,c)=>{this.result='原生失败码 '+c}})}catch(e){this.result='模块加载失败'}}}
+</script><style>.page{width:480px;height:480px;flex-direction:column;justify-content:center;background-color:#101820;padding:20px;}text{color:#ffffff;font-size:28px;margin-bottom:20px;}</style>
