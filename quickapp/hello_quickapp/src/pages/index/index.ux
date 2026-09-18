@@ -1,15 +1,370 @@
 <template>
-  <div class="container">
-    <text>Hello QuickApp - contest 2026 team 000</text>
+<swiper class="unlock-screen" vertical="true" loop="false" indicator="false" index="0">
+  <div class="boot-lock">
+    <text class="boot-brand">WRIST RHYTHM</text>
+    <text class="boot-title">腕上节律教练</text>
+    <text class="boot-subtitle">给专注和休息，留一点节奏</text>
+    <text class="boot-arrow">↑</text>
+    <text class="boot-hint">向上滑动解锁</text>
   </div>
+  <div class="page">
+    <text class="title">腕上节律教练</text>
+    <text class="subtitle">目标由你定，节奏由你掌握</text>
+    <text class="notice">{{notice}}</text>
+    <text class="label">{{aiConnectionText}}</text>
+    <input class="button secondary" type="button" value="检查 AI 连接" onclick="checkAIConnection" />
+    <div class="card" if="{{editable}}">
+      <text class="heading">今天想完成什么？</text>
+      <text class="heading">{{goalDisplay}}</text>
+      <input class="button secondary" type="button" value="编辑学习目标" onclick="editGoal" />
+      <text class="label">净学习时长：5～180 整数分钟</text>
+      <text class="heading">{{minutes}} 分钟</text>
+      <input class="button secondary" type="button" value="修改分钟数" onclick="editMinutes" />
+      <div class="choice" if="{{editing}}">
+        <text class="heading">{{editorTitle}}</text>
+        <text class="detail">{{editorValue}}</text>
+        <div class="keys">
+          <input for="{{keys}}" class="key" type="button" value="{{$item}}" onclick="appendKey($item)" />
+        </div>
+        <input if="{{editingGoal}}" class="button secondary" type="button" value="切换：常用中文 / 英文 / 数字" onclick="cycleKeys" />
+        <input class="button secondary" type="button" value="退格" onclick="backspace" />
+        <input class="button secondary" type="button" value="清空输入" onclick="clearEntry" />
+        <input class="button primary" type="button" value="输入完成" onclick="closeEditor" />
+      </div>
+      <input class="button primary" type="button" value="按总时长直接开始" onclick="directStart" />
+      <input class="button secondary" type="button" value="{{generateLabel}}" disabled="{{busy}}" onclick="generatePlan" />
+      <text class="detail">生成 AI 计划会发送目标和时长；直接计时不调用 AI。</text>
+    </div>
+    <div class="card" if="{{hasPlan}}">
+      <text class="heading">{{planGoal}}</text>
+      <text class="label">{{planSource}}</text>
+      <text class="detail">{{planText}}</text>
+      <input if="{{planned}}" class="button primary" type="button" value="同意计划并开始" onclick="acceptPlan" />
+      <text class="detail" if="{{finished}}">{{summary}}</text>
+    </div>
+    <div class="card" if="{{hasModule}}">
+      <text class="heading">{{moduleTitle}}</text>
+      <text class="detail">{{moduleTask}}</text>
+      <text class="clock">{{clockText}}</text>
+      <text class="status">{{taskText}}</text>
+      <text class="notice">{{actionNotice}}</text>
+      <input if="{{canPause}}" class="button secondary" type="button" value="{{pauseLabel}}" onclick="togglePause" />
+      <input if="{{canFinish}}" class="button muted" type="button" value="提前结束，确认结果" onclick="finishModule" />
+      <div class="choice" if="{{activityVisible}}">
+        <text class="heading">要不要活动 1 分钟？</text>
+        <input class="button primary" type="button" value="开始活动 · 1 分钟" onclick="takeActivity" />
+        <input class="button secondary" type="button" value="继续专注" onclick="dismissActivity" />
+      </div>
+      <div class="choice" if="{{awaitingResult}}">
+        <text class="heading">这个模块完成了吗？</text>
+        <input class="button primary" type="button" value="完成，记录本次" onclick="confirmComplete" />
+        <input class="button secondary" type="button" value="未完成，保留实际时长" onclick="confirmIncomplete" />
+      </div>
+      <input if="{{betweenModules}}" class="button primary" type="button" value="开始下一模块" onclick="acceptPlan" />
+    </div>
+    <div class="card">
+      <text class="heading">{{healthTitle}}</text>
+      <text class="label">{{healthSource}}</text>
+      <text class="detail">{{healthValues}}</text>
+      <text class="detail">{{healthText}}</text>
+      <text class="label">{{healthAISource}}</text>
+      <text class="advice">{{healthAIText}}</text>
+      <text class="label">开启后，异常时发送当前有效指标到 MiMo；不发送身份和历史。</text>
+      <input class="button secondary" type="button" value="{{healthAIToggleLabel}}" onclick="toggleHealthAI" />
+      <input if="{{healthAIAbnormal}}" class="button secondary" type="button" value="重试简短建议" onclick="retryHealthAI" />
+      <input if="{{mildRest}}" class="button secondary" type="button" value="休息 1 分钟" onclick="takeActivity" />
+      <input if="{{healthBlocked}}" class="button secondary" type="button" value="确认状态恢复，解除锁定" onclick="recoverHealth" />
+      <text class="label">本地即时提醒 + 可选 AI 建议 · 测试阈值</text>
+    </div>
+    <div class="card">
+      <text class="heading">今日确认完成 {{count}} 个模块</text>
+      <text class="detail">今日已记录学习 {{learnedMinutes}} 分钟</text>
+      <text class="label">未完成也记录实际学习时间；休息不计入</text>
+      <text class="detail">{{saveText}}</text>
+      <input class="button secondary" type="button" value="重试读取或保存" onclick="retry" />
+    </div>
+    <text class="footer">健康提醒仅供参考，不作医疗诊断。如有不适，请停止活动并寻求专业帮助。</text>
+    <text class="footer">离开页面暂停计时与订阅 · 学习版 3.2</text>
+  </div>
+</swiper>
 </template>
-
-<style>
-.container { flex-direction: column; justify-content: center; align-items: center; }
-</style>
-
 <script>
+import * as flow from '../../common/focusPlan'
+import store from '../../common/persist'
+import { requestStudyPlan } from '../../common/studyPlanner'
+import provider from '../../common/ai-provider'
+import healthProvider from '../../common/health-provider'
+import { classifyHealth } from '../../common/healthPolicy'
+import { healthAdvice } from '../../common/healthAdvice'
+import { requestHealthAdvice } from '../../common/healthAdvisor'
+
 export default {
-  data: { msg: 'hello' }
+  private: {
+    goal: '', goalDisplay: '点击编辑学习目标', minutes: '30', editing: false, editingGoal: false, editorTitle: '', editorValue: '', keys: [], busy: false, generateLabel: '生成 AI 学习计划',
+    editable: true, hasPlan: false, planned: false, finished: false, summary: '',
+    planGoal: '', planSource: '', planText: '', hasModule: false, moduleTitle: '', moduleTask: '',
+    clockText: '0:00', taskText: '', pauseLabel: '暂停', canPause: false, canFinish: false,
+    awaitingResult: false, betweenModules: false, activityVisible: false,
+    healthTitle: '健康数据未连接', healthSource: '未接通健康服务', healthText: '普通学习计时可用。',
+    healthValues: '心率：未连接 · 血氧：未连接 · 压力：未连接', healthBlocked: false, mildRest: false, count: 0, learnedMinutes: 0,
+    aiConnectionText: '正在检查 AI 连接', healthAISource: 'AI 建议等待异常指标', healthAIText: '', healthAIToggleLabel: '关闭自动 AI 健康建议', healthAIAbnormal: false,
+    saveText: '正在读取记录', notice: '', actionNotice: ''
+  },
+  onInit() {
+    this._alive = true; this._visible = false; this._samples = {}; this._revision = 0; this._savedRevision = 0; this._requestId = 0
+    this.restore()
+  },
+  onShow() {
+    this._visible = true
+    if (!this._ticker) this._ticker = setInterval(() => this.tick(), 250)
+    this.subscribeHealth(); this.checkAIConnection(); this.tick()
+  },
+  onHide() { this.leavePage() },
+  onDestroy() { this.leavePage(); this._alive = false },
+  leavePage() {
+    this._visible = false; clearInterval(this._ticker); this._ticker = null
+    this.cancelRequest(); this.cancelHealthAI(); this._healthEpisode = null; this._healthEpisodeRequested = false
+    if (this._unsubscribe) { this._unsubscribe(); this._unsubscribe = null }
+    this._samples = {}
+    if (this._state && flow.pause(this._state, Date.now())) this.changed()
+    this.render()
+  },
+  restore() {
+    if (this._loading) return
+    this._loading = true
+    store.load().then(s => {
+      if (!this._alive) return
+      this._state = s; this.saveText = '记录已读取，离开期间不计时'
+      if (s.plan) { this.goal = s.plan.goal; this.goalDisplay = this.goal; this.minutes = String(s.plan.totalMinutes) }
+      this.render()
+    }).catch(() => { this.saveText = '读取失败，原记录保留，请重试' }).then(() => { this._loading = false })
+  },
+  changed() { this._revision++; this.persist() },
+  persist() {
+    if (!this._state || this._writing || this._writeError || this._revision === this._savedRevision) return
+    const rev = this._revision; this._writing = true; this.saveText = '正在保存'
+    store.save(this._state).then(() => { this._savedRevision = rev; this.saveText = '已保存到本机' })
+      .catch(() => {
+        this._writeError = true
+        flow.pause(this._state, Date.now()); this._revision++
+        this.saveText = '保存失败，计时已暂停；请重试'; this.actionNotice = this.saveText; this.render()
+      }).then(() => { this._writing = false; if (!this._writeError && this._revision !== this._savedRevision) this.persist() })
+  },
+  ready() {
+    if (!this._state || this._loading) { this.notice = '请先成功读取记录'; return false }
+    if (this._writeError) { this.notice = '请先重试保存，避免丢失学习记录'; return false }
+    return true
+  },
+  cancelRequest() {
+    this._requestId++
+    if (this._cancel) { this._cancel(); this._cancel = null }
+    this.busy = false; this.generateLabel = '生成 AI 学习计划'
+  },
+  inputChanged() {
+    this.cancelRequest()
+    if (this._state && this._state.plan && this._state.plan.status === 'planned') { this._state.plan = null; this._state.currentModule = null; this.changed(); this.render() }
+  },
+  editGoal() { this.editing = true; this.editingGoal = true; this._keyPage = 0; this.editorTitle = '点按输入目标'; this.updateEditor() },
+  editMinutes() { this.editing = true; this.editingGoal = false; this.editorTitle = '点按输入分钟'; this.updateEditor() },
+  updateEditor() {
+    const chinese = ['学习', '复习', '数学', '英语', '物理', '阅读', '练习', '第一章', '第二章', '整理错题', '背单词', '完成作业']
+    this.keys = !this.editingGoal || this._keyPage === 2 ? ['1','2','3','4','5','6','7','8','9','0'] : this._keyPage === 1 ? 'abcdefghijklmnopqrstuvwxyz'.split('') : chinese
+    this.editorValue = this.editingGoal ? this.goal : this.minutes
+    this.goalDisplay = this.goal || '点击编辑学习目标'
+  },
+  appendKey(value) {
+    if (this.editingGoal) { if (this.goal.length + value.length <= 120) this.goal += value }
+    else if (this.minutes.length < 3) this.minutes += value
+    this.inputChanged(); this.updateEditor()
+  },
+  cycleKeys() { this._keyPage = (this._keyPage + 1) % 3; this.updateEditor() },
+  backspace() { if (this.editingGoal) this.goal = this.goal.slice(0, -1); else this.minutes = this.minutes.slice(0, -1); this.inputChanged(); this.updateEditor() },
+  clearEntry() { if (this.editingGoal) this.goal = ''; else this.minutes = ''; this.inputChanged(); this.updateEditor() },
+  closeEditor() { this.editing = false; this.goalDisplay = this.goal || '点击编辑学习目标' },
+  validInput() {
+    if (!flow.checkInput(this.goal, Number(this.minutes))) { this.notice = '请输入 1～120 字目标，时长为 5～180 的整数'; return false }
+    return true
+  },
+  directStart() {
+    if (!this.ready() || !this.validInput()) return
+    this.cancelRequest()
+    const total = Number(this.minutes)
+    if (!flow.makePlan(this._state, this.goal, total, [{ title: '自主学习', minutes: total, task: this.goal }], '自主计时 · 未调用 AI', Date.now())) return
+    this.changed(); this.acceptPlan()
+  },
+  generatePlan() {
+    if (!this.ready() || !this.validInput() || this.busy || !flow.canReplace(this._state)) return
+    this.cancelRequest(); const id = this._requestId
+    this.busy = true; this.generateLabel = '正在生成…'; this.notice = '正在生成，请稍候'
+    const goal = this.goal; const total = Number(this.minutes)
+    this._cancel = requestStudyPlan(provider, goal, total, result => {
+      if (!this._alive || id !== this._requestId) return
+      this.busy = false; this.generateLabel = '生成 AI 学习计划'
+      flow.makePlan(this._state, goal, total, result.modules, result.source, Date.now())
+      this.notice = '请查看计划，同意后才开始；也可按总时长直接开始'; this.changed(); this.render()
+    })
+  },
+  acceptPlan() {
+    if (!this.ready()) return
+    if (!flow.startModule(this._state, Date.now())) { this.notice = this._state.healthBlocked ? '健康状态锁定，请先确认恢复' : '当前模块尚未结束'; return }
+    this.notice = ''; this.actionNotice = ''; this.editing = false; this.changed(); this.render()
+  },
+  togglePause() {
+    if (!this.ready()) return
+    const m = this._state.currentModule
+    if (!m) return
+    if (m.status === 'paused') {
+      if (!flow.resume(this._state, Date.now())) this.actionNotice = '健康异常锁定，不能直接继续'
+      else this.actionNotice = ''
+    } else flow.pause(this._state, Date.now())
+    this.changed(); this.render()
+  },
+  takeActivity() { if (this.ready() && flow.activity(this._state, Date.now(), true)) { this.actionNotice = '休息结束自动继续学习'; this.changed(); this.render() } },
+  dismissActivity() { if (this.ready() && flow.activity(this._state, Date.now(), false)) { this.changed(); this.render() } },
+  finishModule() { if (this.ready() && flow.finishEarly(this._state, Date.now())) { this.changed(); this.render() } },
+  confirmComplete() { this.confirm(true) },
+  confirmIncomplete() { this.confirm(false) },
+  confirm(value) { if (this.ready() && flow.confirmResult(this._state, value, Date.now())) { this.actionNotice = '结果已记录'; this.changed(); this.render() } },
+  checkAIConnection() {
+    if (provider && typeof provider.status === 'function') provider.status(text => { if(this._alive) this.aiConnectionText=text })
+    else this.aiConnectionText='原生 Agent 连接状态以实际请求结果为准'
+  },
+  cancelHealthAI() {
+    this._healthRequestId=(this._healthRequestId || 0)+1
+    if(this._healthCancel){this._healthCancel();this._healthCancel=null}
+  },
+  toggleHealthAI() {
+    if(!this.ready())return
+    this._state.aiHealthEnabled=!this._state.aiHealthEnabled
+    this.cancelHealthAI();this._healthEpisodeRequested=false;this._healthEpisode=null
+    this.changed();this.checkHealth();this.render()
+  },
+  retryHealthAI() { this._healthEpisodeRequested=false;this.checkHealth();this.render() },
+  updateHealthAI(h, now) {
+    if(!this._state || !this._visible)return
+    this.healthAIToggleLabel=this._state.aiHealthEnabled ? '关闭自动 AI 健康建议' : '开启自动 AI 健康建议'
+    const abnormal=['mild','severe'].indexOf(h.level)>=0
+    this.healthAIAbnormal=abnormal && this._state.aiHealthEnabled
+    if(!this._state.aiHealthEnabled || !abnormal) {
+      if(this._healthEpisode){this.cancelHealthAI();this._healthEpisode=null}
+      this._healthEpisodeRequested=false;this.healthAIText=''
+      this.healthAISource=this._state.aiHealthEnabled ? '当前没有需要请求 AI 的有效异常指标' : 'AI 健康建议已关闭 · 本地提醒保留'
+      return
+    }
+    if(this._healthEpisode!==h.level) {
+      this.cancelHealthAI();this._healthEpisode=h.level;this._healthEpisodeRequested=false;this.healthAIText=''
+    }
+    if(this._healthEpisodeRequested)return
+    const escalation=h.level==='severe' && this._healthLastSentLevel!=='severe'
+    if(now<(this._healthNextAllowed || 0) && !escalation) {
+      this.healthAISource='本地提醒已生效；AI 请求冷却中';return
+    }
+    this._healthEpisodeRequested=true;this._healthNextAllowed=now+60000;this._healthLastSentLevel=h.level
+    const id=this._healthRequestId;const level=h.level
+    this.healthAISource='MiMo 正在生成简短建议（最多 12 秒）'
+    this._healthCancel=requestHealthAdvice(provider,this._samples,level,now,result=>{
+      if(!this._alive || !this._visible || id!==this._healthRequestId || !this._state.aiHealthEnabled || this._healthEpisode!==level)return
+      this.healthAIText=result.text;this.healthAISource=result.source+' · 基于本次异常采样'
+    })
+  },
+  subscribeHealth() {
+    if (!healthProvider || this._unsubscribe) return
+    try {
+      this._unsubscribe = healthProvider.subscribe((name, sample) => {
+        if (!this._visible) return
+        this._samples[name] = sample; this.healthSource = sample.source === 'replay' ? '回放数据 · 不是佩戴者实时测量' : '设备健康服务'
+        this.checkHealth(); this.render()
+      }, name => { this.healthSource = '部分或全部健康订阅不可用'; delete this._samples[name]; this.checkHealth(); this.render() })
+    } catch (e) { this.healthSource = '当前镜像不支持健康服务' }
+  },
+  checkHealth() {
+    const now = Date.now()
+    const value = (name, unit) => {
+      const sample = this._samples[name]
+      if (!sample || typeof sample.value !== 'number' || !Number.isFinite(sample.value) || sample.value < 0 || (name === 'heartRate' && (sample.value <= 0 || sample.value > 300)) || (name === 'spo2' && (sample.value <= 0 || sample.value > 100))) return '未连接'
+      if (typeof sample.at !== 'number' || sample.at > now || now - sample.at > 30000) return '数据已过期'
+      return sample.value + unit
+    }
+    this.healthValues = '心率：' + value('heartRate', ' bpm') + ' · 血氧：' + value('spo2', '%') + ' · 压力：' + value('stress', '（仅显示）')
+    const h = classifyHealth(this._samples, now); this._health = h
+    this.healthTitle = { normal: '状态正常（已获取指标）', mild: '建议暂时休息', severe: '已自动暂停，请先休息', partial: '部分数据缺失', unknown: '健康数据未连接' }[h.level]
+    this.healthText = healthAdvice(h.level)
+    if (this._state && h.level === 'severe' && flow.blockHealth(this._state, Date.now())) { this.actionNotice = '健康异常已锁定计时'; this.changed() }
+    if (this._state && this._state.healthBlocked) this.healthText = '异常锁定仍保留；新鲜指标恢复后，需主动确认解除。'
+    this.updateHealthAI(h, now)
+  },
+  recoverHealth() {
+    if (!this._state) return
+    this.checkHealth()
+    if (flow.unlockHealth(this._state, this._health)) { this.actionNotice = '锁定已解除，请点击继续'; this.changed() }
+    else this.actionNotice = '尚无完整、新鲜且符合恢复规则的数据'
+    this.render()
+  },
+  tick() {
+    if (!this._state || !this._visible) return
+    this.checkHealth()
+    if (flow.tick(this._state, Date.now())) this.changed()
+    if (!this._lastCheckpoint || Date.now() - this._lastCheckpoint >= 5000) {
+      this._lastCheckpoint = Date.now()
+      const m = this._state.currentModule
+      if (m && (m.status === 'running' || m.status === 'resting')) { flow.checkpoint(this._state, Date.now()); this.changed() }
+    }
+    this.render()
+  },
+  render() {
+    if (!this._state) return
+    const s = this._state; const p = s.plan; const m = s.currentModule
+    this.editable = flow.canReplace(s); this.hasPlan = !!p; this.planned = !!p && p.status === 'planned'; this.finished = !!p && p.status === 'completed'
+    this.planGoal = p ? p.goal : ''; this.planSource = p ? p.source + (p.source.indexOf('本地计划')===0 ? '（这是生成时的记录，可重新生成）' : '') : ''
+    this.planText = p ? p.modules.map((x, i) => (i + 1) + '. ' + x.title + ' · ' + x.minutes + ' 分钟：' + x.task).join('\n') : ''
+    this.summary = p ? '计划已结束，完成 ' + s.records.filter(r => r.planId === p.id && r.completed).length + '/' + p.modules.length + ' 个模块' : ''
+    this.hasModule = !!m
+    const item = p && m ? p.modules.filter(x => x.id === m.id)[0] : null
+    this.moduleTitle = item ? item.title : ''; this.moduleTask = item ? item.task : ''
+    this.clockText = flow.displayTime(flow.remaining(s, Date.now()))
+    this.taskText = m ? { running: '学习中', resting: '活动休息 · 到时自动继续', paused: m.pauseMode === 'rest' ? '休息已暂停' : '学习已暂停', awaiting_result: '等待确认完成情况', recorded: '结果已记录' }[m.status] : ''
+    this.pauseLabel = m && m.status === 'paused' ? '继续计时' : '暂停计时'
+    this.canPause = !!m && ['running', 'paused', 'resting'].indexOf(m.status) >= 0
+    this.canFinish = this.canPause
+    this.awaitingResult = !!m && m.status === 'awaiting_result'
+    this.betweenModules = !!p && p.status === 'between_modules'
+    this.activityVisible = !!m && m.activityPrompt && m.status === 'running' && !s.healthBlocked
+    this.healthBlocked = s.healthBlocked
+    this.mildRest = !!m && m.status === 'running' && this._health && this._health.level === 'mild' && !s.healthBlocked
+    const t = flow.totals(s, Date.now()); this.count = t.count; this.learnedMinutes = t.minutes
+  },
+  retry() { if (!this._state) this.restore(); else { this._writeError = false; this.persist(); this.render() } }
 }
 </script>
+<style>
+.unlock-screen { width: 100%; height: 100%; background-color: #101820; }
+.boot-lock { width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; background-color: #101820; }
+.boot-brand { font-size: 18px; color: #7cd9bf; margin-bottom: 22px; }
+.boot-title { font-size: 40px; font-weight: bold; margin-bottom: 16px; }
+.boot-subtitle { font-size: 22px; color: #a5b7c2; }
+.boot-arrow { font-size: 42px; color: #7cd9bf; margin-top: 70px; }
+.boot-hint { font-size: 23px; color: #a5b7c2; margin-top: 10px; }
+
+.page { width: 100%; height: 100%; flex-direction: column; align-items: center; overflow: auto; background-color: #101820; padding: 38px 28px 48px; }
+text { color: #eef4f4; }
+.eyebrow { font-size: 16px; color: #7cd9bf; margin-bottom: 8px; }
+.title { font-size: 34px; font-weight: bold; }
+.subtitle { font-size: 19px; color: #a5b7c2; margin-top: 8px; margin-bottom: 24px; }
+.card { width: 100%; flex-shrink: 0; flex-direction: column; align-items: center; background-color: #1b2834; border-radius: 24px; padding: 22px 18px; margin-bottom: 18px; }
+.label { font-size: 18px; color: #9eb5c2; text-align: center; margin-bottom: 10px; }
+.heading { font-size: 28px; color: #f1f7f7; margin-bottom: 10px; text-align: center; }
+.detail { font-size: 20px; color: #bccbd2; text-align: center; margin-bottom: 12px; }
+.advice { font-size: 28px; color: #86e3c8; text-align: center; margin-top: 14px; margin-bottom: 14px; }
+.button { width: 100%; height: 58px; flex-shrink: 0; font-size: 23px; border-radius: 18px; margin-top: 12px; text-align: center; }
+.primary { background-color: #86e3c8; color: #10251f; }
+.secondary { background-color: #304455; color: #f1f7f7; }
+.muted { background-color: #1b2834; color: #eab5a7; }
+.clock { font-size: 66px; color: #86e3c8; margin-top: 6px; }
+.status { font-size: 23px; color: #d8e6eb; margin-bottom: 8px; }
+.footer { font-size: 17px; color: #93a8b6; text-align: center; margin-bottom: 28px; }
+.entry { width: 100%; height: 62px; font-size: 24px; color: #eef4f4; background-color: #304455; margin-bottom: 16px; padding: 10px; }
+.choice { width: 100%; flex-direction: column; margin-top: 16px; }
+.notice { font-size: 20px; color: #f2c68b; text-align: center; margin-bottom: 10px; }
+.keys { width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+.key { width: 30%; height: 54px; margin: 4px; font-size: 20px; background-color: #304455; color: #eef4f4; border-radius: 10px; }
+</style>

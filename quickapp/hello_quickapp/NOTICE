@@ -1,0 +1,16 @@
+# 复用来源
+
+本项目参考用户提供的《腕上节律教练逐步操作与代码》，重新实现业务状态验证、三类任务、错误恢复和页面。
+
+复用 open-vela/packages_fe_examples 中 multi_screen_todolist 示例的工程组织、aiot-toolkit 构建命令和 watch manifest 结构；图标 logo.png 来自该示例。参考源码在本机 /home/ma/openvela/apps/packages/fe/examples/multi_screen_todolist，原有版权和许可证适用。未将示例的任务数据当作本项目数据。
+
+页面渲染、JavaScript 引擎和持久化均调用 openvela 已有快应用运行时，无需重新实现驱动、图形库或数据库。现有 hello/lvgldemo 用户修改保持不变。
+
+健康订阅按官方 service.health 文档实现，已在官方赛事镜像验证回放：
+https://github.com/open-vela/docs/blob/dev-ai-contest-2026/zh-cn/contest_2026/quickapp/service_health_guide.md
+
+原生 AI 接口适配按官方文档保留，当前默认使用自建服务；原生 Agent 尚未验收：
+https://github.com/open-vela/docs/blob/dev-ai-contest-2026/zh-cn/contest_2026/quickapp/quickapp_velaclaw.md
+
+存储 API：
+https://iot.mi.com/vela/quickapp/zh/features/data/storage.html

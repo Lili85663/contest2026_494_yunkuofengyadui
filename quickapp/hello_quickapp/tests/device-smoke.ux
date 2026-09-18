@@ -1,0 +1,6 @@
+<template><div class="page"><text>接口实机验收</text><text>{{result}}</text><text>{{hr}}</text><text>{{spo}}</text><text>{{stress}}</text></div></template><script>
+import provider from '../../common/ai-provider'
+import health from '../../common/health-provider'
+import {requestStudyPlan} from '../../common/studyPlanner'
+export default {private:{result:'请求 MiMo 中',hr:'心率等待',spo:'血氧等待',stress:'压力等待'},onInit(){this.cancel=requestStudyPlan(provider,'学习数学',5,r=>{this.result=r.source+'；模块 '+r.modules.length+'；合计 '+r.modules.reduce((a,b)=>a+b.minutes,0)+' 分钟'});this.unsub=health.subscribe((n,s)=>{const value=n+'='+s.value+'，新鲜='+(Math.abs(Date.now()-Number(s.at))<30000);if(n==='heartRate')this.hr=value;if(n==='spo2')this.spo=value;if(n==='stress')this.stress=value},n=>{this.hr='订阅失败 '+n})},onDestroy(){if(this.cancel)this.cancel();if(this.unsub)this.unsub()}}
+</script><style>.page{width:480px;height:480px;flex-direction:column;justify-content:center;background-color:#101820;padding:20px;}text{color:#ffffff;font-size:24px;margin-bottom:20px;}</style>

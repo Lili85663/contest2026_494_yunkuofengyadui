@@ -1,0 +1,44 @@
+{
+  "package": "com.example.wristrhythm",
+  "name": "腕上节律教练",
+  "versionName": "3.2.0",
+  "versionCode": 5,
+  "minPlatformVersion": 1200,
+  "icon": "/common/logo.png",
+  "deviceTypeList": [
+    "watch"
+  ],
+  "features": [
+    {
+      "name": "system.storage"
+    },
+    {
+      "name": "system.fetch"
+    },
+    {
+      "name": "service.health"
+    }
+  ],
+  "config": {
+    "logLevel": "log",
+    "designWidth": 480
+  },
+  "router": {
+    "entry": "pages/index",
+    "pages": {
+      "pages/index": {
+        "component": "index"
+      }
+    }
+  },
+  "display": {
+    "backgroundColor": "#101820",
+    "textColor": "#ffffff"
+  },
+  "minAPILevel": 1,
+  "permissions": [
+    {
+      "name": "hapjs.permission.HEALTH"
+    }
+  ]
+}

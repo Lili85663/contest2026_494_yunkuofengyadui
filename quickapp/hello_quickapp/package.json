@@ -1,0 +1,14 @@
+{
+  "name": "wrist-rhythm",
+  "version": "3.2.0",
+  "private": true,
+  "scripts": {
+    "build": "aiot build",
+    "release": "aiot release",
+    "test": "node tests/run.mjs"
+  },
+  "devDependencies": {
+    "aiot-toolkit": "1.1.4"
+  },
+  "license": "Apache-2.0"
+}
